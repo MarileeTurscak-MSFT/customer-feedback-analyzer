@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Usage Report — AI Cost Analyzer</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --yellow: #d29922; --red: #f85149;
+    --purple: #bc8cff; --orange: #f0883e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+         background: var(--bg); color: var(--text); padding: 24px; line-height: 1.5; }
+  .header { text-align: center; margin-bottom: 32px; }
+  .header h1 { font-size: 28px; margin-bottom: 4px; }
+  .header .sub { color: var(--muted); font-size: 14px; }
+
+  /* KPI row */
+  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 32px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+         padding: 20px; text-align: center; }
+  .kpi .value { font-size: 36px; font-weight: 700; }
+  .kpi .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+  .kpi .change { font-size: 13px; margin-top: 6px; }
+  .kpi .change.up { color: var(--green); }
+  .kpi .change.down { color: var(--red); }
+
+  /* Two-col layout */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+  .grid-full { margin-bottom: 32px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .card h2 { font-size: 16px; margin-bottom: 16px; color: var(--accent); }
+
+  /* Charts */
+  .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; }
+  .bar-label { width: 140px; font-size: 13px; text-align: right; color: var(--muted); }
+  .bar-track { flex: 1; height: 28px; background: var(--bg); border-radius: 6px; overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 10px;
+              font-size: 12px; font-weight: 600; color: #fff; transition: width 0.6s ease; }
+  .bar-pct { font-size: 12px; width: 48px; text-align: right; color: var(--muted); }
+
+  /* Donut */
+  .donut-container { display: flex; align-items: center; justify-content: center; gap: 32px; }
+  .donut-svg { width: 180px; height: 180px; }
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+  .donut-legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .donut-swatch { width: 12px; height: 12px; border-radius: 3px; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--border); color: var(--muted);
+       font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: rgba(88,166,255,0.04); }
+  .status { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; }
+  .status-active { background: rgba(63,185,80,0.15); color: var(--green); }
+  .status-at-risk { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .status-inactive { background: rgba(248,81,73,0.15); color: var(--red); }
+
+  /* Depth bar (inline) */
+  .depth-bar { display: flex; gap: 3px; }
+  .depth-pip { width: 18px; height: 10px; border-radius: 2px; }
+  .depth-pip.filled { background: var(--accent); }
+  .depth-pip.empty { background: var(--border); }
+
+  /* Trend arrows */
+  .trend-up { color: var(--green); }
+  .trend-stable { color: var(--muted); }
+  .trend-new { color: var(--purple); }
+
+  /* Actions */
+  .action-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .action-row:last-child { border-bottom: none; }
+  .action-badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .action-high { background: rgba(248,81,73,0.15); color: var(--red); }
+  .action-med { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .action-low { background: rgba(63,185,80,0.15); color: var(--green); }
+  .action-text { font-size: 13px; }
+  .action-who { color: var(--muted); font-size: 12px; }
+
+  .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 32px; padding-top: 16px;
+            border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 Customer Usage Report</h1>
+  <div class="sub">AI Cost Analyzer &nbsp;·&nbsp; April 29 — May 29, 2026 &nbsp;·&nbsp; Source: Product Telemetry API</div>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="value">13</div>
+    <div class="label">Total Customers</div>
+    <div class="change up">+2 from last month</div>
+  </div>
+  <div class="kpi">
+    <div class="value" style="color:var(--accent)">6</div>
+    <div class="label">Advanced Deployers</div>
+    <div class="change up">+50% ↑</div>
+  </div>
+  <div class="kpi">
+    <div class="value" style="color:var(--green)">11</div>
+    <div class="label">Monthly Active (MAU)</div>
+    <div class="change up">+10% ↑</div>
+  </div>
+  <div class="kpi">
+    <div class="value" style="color:var(--purple)">8</div>
+    <div class="label">Weekly Active (WAU)</div>
+    <div class="change up">+14% ↑</div>
+  </div>
+  <div class="kpi">
+    <div class="value" style="color:var(--red)">2</div>
+    <div class="label">Inactive / Churned</div>
+    <div class="change down">+1 from last month</div>
+  </div>
+</div>
+
+<!-- Feature Adoption + Depth Distribution -->
+<div class="grid-2">
+  <div class="card">
+    <h2>Feature Adoption</h2>
+    <div class="bar-chart" id="featureChart"></div>
+  </div>
+  <div class="card">
+    <h2>Deployment Depth</h2>
+    <div class="donut-container">
+      <svg class="donut-svg" viewBox="0 0 42 42" id="donutSvg"></svg>
+      <div class="donut-legend" id="donutLegend"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Engagement Segments + MoM Trends -->
+<div class="grid-2">
+  <div class="card">
+    <h2>Engagement Segments</h2>
+    <div class="bar-chart" id="segmentChart"></div>
+  </div>
+  <div class="card">
+    <h2>Month-over-Month Trends</h2>
+    <table>
+      <thead><tr><th>Metric</th><th>This Month</th><th>Last Month</th><th>Change</th></tr></thead>
+      <tbody>
+        <tr><td>MAU</td><td>11</td><td>10</td><td class="trend-up">+10% ↑</td></tr>
+        <tr><td>WAU</td><td>8</td><td>7</td><td class="trend-up">+14% ↑</td></tr>
+        <tr><td>Advanced Deployers</td><td>6</td><td>4</td><td class="trend-up">+50% ↑</td></tr>
+        <tr><td>Avg Features/Customer</td><td>2.5</td><td>2.1</td><td class="trend-up">+19% ↑</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Customer Roster -->
+<div class="grid-full">
+  <div class="card">
+    <h2>Customer Roster</h2>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Customer</th><th>Features</th><th>Depth</th><th>Last Active</th><th>MAU</th><th>WAU</th><th>Status</th></tr>
+      </thead>
+      <tbody id="rosterBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- At-Risk + Recommended Actions -->
+<div class="grid-2">
+  <div class="card">
+    <h2>⚠️ At-Risk Customers</h2>
+    <table>
+      <thead><tr><th>Customer</th><th>Last Active</th><th>Risk Signal</th></tr></thead>
+      <tbody>
+        <tr><td>Relecloud</td><td>May 18</td><td>Was weekly active, now 11 days silent</td></tr>
+        <tr><td>Wingtip Toys</td><td>May 12</td><td>Only uses Scan. Never adopted Dashboard</td></tr>
+        <tr><td>Margie's Travel</td><td>May 3</td><td>Used Scan once in May. Declining</td></tr>
+        <tr><td>Litware Inc</td><td>Apr 15</td><td>Inactive 44 days. Trial only, never returned</td></tr>
+        <tr><td>VanArsdel Ltd</td><td>Apr 2</td><td>Inactive 57 days. Onboarding failure</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h2>🎯 Recommended Actions</h2>
+    <div class="action-row">
+      <span class="action-badge action-high">High</span>
+      <div><div class="action-text">Re-engage with onboarding call</div><div class="action-who">Litware Inc, VanArsdel Ltd</div></div>
+    </div>
+    <div class="action-row">
+      <span class="action-badge action-high">High</span>
+      <div><div class="action-text">Check in on usage drop</div><div class="action-who">Relecloud</div></div>
+    </div>
+    <div class="action-row">
+      <span class="action-badge action-med">Medium</span>
+      <div><div class="action-text">Promote Alerts to 2-feature customers</div><div class="action-who">Adatum Corp, Proseware Inc</div></div>
+    </div>
+    <div class="action-row">
+      <span class="action-badge action-med">Medium</span>
+      <div><div class="action-text">Share getting-started lab</div><div class="action-who">Wingtip Toys, Margie's Travel</div></div>
+    </div>
+    <div class="action-row">
+      <span class="action-badge action-low">Low</span>
+      <div><div class="action-text">Highlight API integration to power users</div><div class="action-who">Contoso, Northwind, Fabrikam</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Sample report with fictional data for demonstration purposes &nbsp;·&nbsp; Customer Feedback Analyzer &nbsp;·&nbsp; github.com/MarileeTurscak-MSFT/customer-feedback-analyzer
+</div>
+
+<script>
+// Feature adoption bars
+const features = [
+  { name: 'Resource Scan', pct: 92, color: '#3fb950', trend: '→ Stable' },
+  { name: 'Cost Dashboard', pct: 85, color: '#58a6ff', trend: '↑ +1' },
+  { name: 'Stale Resource Alerts', pct: 31, color: '#bc8cff', trend: '↑ +1' },
+  { name: 'Scheduled Reports', pct: 31, color: '#d29922', trend: '→ Stable' },
+  { name: 'Resource Tagging', pct: 23, color: '#f0883e', trend: '↑ New' },
+  { name: 'REST API', pct: 15, color: '#f85149', trend: '→ Stable' },
+];
+const fc = document.getElementById('featureChart');
+features.forEach(f => {
+  const row = document.createElement('div'); row.className = 'bar-row';
+  row.innerHTML =
+    '<div class="bar-label">' + f.name + '</div>' +
+    '<div class="bar-track"><div class="bar-fill" style="width:' + f.pct + '%;background:' + f.color + '">' + f.pct + '%</div></div>' +
+    '<div class="bar-pct" style="color:' + (f.trend.includes('↑') ? 'var(--green)' : 'var(--muted)') + '">' + f.trend + '</div>';
+  fc.appendChild(row);
+});
+
+// Donut chart — deployment depth
+const depthData = [
+  { label: '1 feature', value: 3, color: '#f85149' },
+  { label: '2 features', value: 4, color: '#d29922' },
+  { label: '3 features', value: 3, color: '#58a6ff' },
+  { label: '4 features', value: 2, color: '#bc8cff' },
+  { label: '5+ features', value: 1, color: '#3fb950' },
+];
+const total = depthData.reduce((s, d) => s + d.value, 0);
+const svg = document.getElementById('donutSvg');
+const legend = document.getElementById('donutLegend');
+let offset = 25;
+depthData.forEach(d => {
+  const pct = (d.value / total) * 100;
+  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  circle.setAttribute('cx', '21'); circle.setAttribute('cy', '21'); circle.setAttribute('r', '15.9155');
+  circle.setAttribute('fill', 'none'); circle.setAttribute('stroke', d.color); circle.setAttribute('stroke-width', '4');
+  circle.setAttribute('stroke-dasharray', pct + ' ' + (100 - pct));
+  circle.setAttribute('stroke-dashoffset', -offset);
+  svg.appendChild(circle);
+  offset += pct;
+  const item = document.createElement('div'); item.className = 'donut-legend-item';
+  item.innerHTML = '<div class="donut-swatch" style="background:' + d.color + '"></div>' + d.label + ' <strong>(' + d.value + ')</strong>';
+  legend.appendChild(item);
+});
+// center text
+const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+txt.setAttribute('x', '21'); txt.setAttribute('y', '20'); txt.setAttribute('text-anchor', 'middle');
+txt.setAttribute('fill', '#e6edf3'); txt.setAttribute('font-size', '5'); txt.setAttribute('font-weight', '700');
+txt.textContent = '2.5';
+const txt2 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+txt2.setAttribute('x', '21'); txt2.setAttribute('y', '24.5'); txt2.setAttribute('text-anchor', 'middle');
+txt2.setAttribute('fill', '#8b949e'); txt2.setAttribute('font-size', '2.5');
+txt2.textContent = 'avg features';
+svg.appendChild(txt); svg.appendChild(txt2);
+
+// Segment bars
+const segments = [
+  { name: 'Power Users', count: 3, color: '#3fb950' },
+  { name: 'Regular Users', count: 5, color: '#58a6ff' },
+  { name: 'Light Users', count: 3, color: '#d29922' },
+  { name: 'At Risk', count: 3, color: '#f0883e' },
+  { name: 'Churned', count: 2, color: '#f85149' },
+];
+const sc = document.getElementById('segmentChart');
+segments.forEach(s => {
+  const pct = Math.round((s.count / 13) * 100);
+  const row = document.createElement('div'); row.className = 'bar-row';
+  row.innerHTML =
+    '<div class="bar-label">' + s.name + '</div>' +
+    '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + s.color + '">' + s.count + '</div></div>' +
+    '<div class="bar-pct">' + pct + '%</div>';
+  sc.appendChild(row);
+});
+
+// Customer roster
+const customers = [
+  { name: 'Contoso Financial', features: 'Scan, Dashboard, Alerts, Reports, API', depth: 5, last: 'May 29', mau: true, wau: true, status: 'Active' },
+  { name: 'Northwind Traders', features: 'Scan, Dashboard, Reports, Tagging', depth: 4, last: 'May 28', mau: true, wau: true, status: 'Active' },
+  { name: 'Fabrikam Healthcare', features: 'Scan, Dashboard, Alerts, Tagging', depth: 4, last: 'May 27', mau: true, wau: true, status: 'Active' },
+  { name: 'Woodgrove Bank', features: 'Scan, Dashboard, Reports', depth: 3, last: 'May 29', mau: true, wau: true, status: 'Active' },
+  { name: 'Tailspin Toys', features: 'Scan, Dashboard, Alerts', depth: 3, last: 'May 26', mau: true, wau: true, status: 'Active' },
+  { name: 'Alpine Ski House', features: 'Scan, Dashboard, API', depth: 3, last: 'May 25', mau: true, wau: true, status: 'Active' },
+  { name: 'Adatum Corp', features: 'Scan, Dashboard', depth: 2, last: 'May 28', mau: true, wau: true, status: 'Active' },
+  { name: 'Proseware Inc', features: 'Scan, Dashboard', depth: 2, last: 'May 24', mau: true, wau: true, status: 'Active' },
+  { name: 'Relecloud', features: 'Scan, Reports', depth: 2, last: 'May 18', mau: true, wau: false, status: 'At Risk' },
+  { name: 'Wingtip Toys', features: 'Scan', depth: 1, last: 'May 12', mau: true, wau: false, status: 'At Risk' },
+  { name: "Margie's Travel", features: 'Scan', depth: 1, last: 'May 3', mau: true, wau: false, status: 'At Risk' },
+  { name: 'Litware Inc', features: 'Scan', depth: 1, last: 'Apr 15', mau: false, wau: false, status: 'Inactive' },
+  { name: 'VanArsdel Ltd', features: 'Dashboard', depth: 1, last: 'Apr 2', mau: false, wau: false, status: 'Inactive' },
+];
+const rb = document.getElementById('rosterBody');
+customers.forEach((c, i) => {
+  const tr = document.createElement('tr');
+  const statusClass = c.status === 'Active' ? 'status-active' : c.status === 'At Risk' ? 'status-at-risk' : 'status-inactive';
+  let pips = '';
+  for (let p = 0; p < 6; p++) {
+    pips += '<div class="depth-pip ' + (p < c.depth ? 'filled' : 'empty') + '"></div>';
+  }
+  tr.innerHTML =
+    '<td>' + (i + 1) + '</td>' +
+    '<td><strong>' + c.name + '</strong></td>' +
+    '<td style="font-size:12px;color:var(--muted)">' + c.features + '</td>' +
+    '<td><div class="depth-bar">' + pips + '</div></td>' +
+    '<td>' + c.last + '</td>' +
+    '<td>' + (c.mau ? '✅' : '—') + '</td>' +
+    '<td>' + (c.wau ? '✅' : '—') + '</td>' +
+    '<td><span class="status ' + statusClass + '">' + c.status + '</span></td>';
+  rb.appendChild(tr);
+});
+</script>
+</body>
+</html>
