@@ -12,6 +12,7 @@ Customer Feedback Analyzer provides AI skills that turn raw customer feedback in
 - **Cumulative Feedback Report** synthesizes all historical feedback into trends, ranked features, bugs, and sentiment.
 - **Social Sentiment Scanner** searches Reddit, Stack Overflow, and X for public customer sentiment about any product.
 - **Resolution Status Tracker** cross-references customer feedback with your issue tracker to report what's been fixed, what's on the roadmap, and what's still open.
+- **Asset Gap Tracker** identifies missing docs, videos, labs, and marketing materials causing customer friction, and tracks their creation status.
 - All skills generate **markdown reports** and **visual HTML dashboards**.
 - Works with **GitHub Copilot, Claude, ChatGPT, or any LLM agent**.
 
@@ -21,6 +22,7 @@ Customer Feedback Analyzer provides AI skills that turn raw customer feedback in
 - 📊 Cumulative trend analysis across all feedback history
 - 🌐 Social sentiment scanning across Reddit, Stack Overflow, and X
 - ✅ Resolution tracking — what's fixed, roadmapped, backlogged, or missing
+- 📂 Asset gap tracking — missing docs, videos, labs, and marketing materials
 - 📈 Interactive HTML dashboards with charts and visualizations
 - 🔌 Portable — works with any LLM and any transcript source
 - 🛡️ Privacy-first — runs locally, no data sent to third parties
@@ -87,6 +89,13 @@ customer-feedback-analyzer/
 2. Classifies each item as resolved, on roadmap, backlogged, open, or untracked
 3. Calculates resolution rate and roadmap coverage metrics
 4. Flags customer-reported items with no matching work item
+
+### 5. Asset Gap Tracker
+
+1. Scans feedback for signals of missing or hard-to-find enablement assets
+2. Categorizes gaps by type: docs, videos, labs, samples, marketing, FAQs
+3. Identifies friction hotspots where multiple gaps cluster
+4. Tracks creation status of each asset from missing through resolved
 
 ## HTML Dashboards
 
