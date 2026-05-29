@@ -6,11 +6,12 @@
 
 ## Overview
 
-Customer Feedback Analyzer provides two AI skills that turn raw customer feedback into structured, actionable reports.
+Customer Feedback Analyzer provides AI skills that turn raw customer feedback into structured, actionable reports.
 
 - **Weekly Feedback Analyzer** processes meeting transcripts and notes from the past week.
 - **Cumulative Feedback Report** synthesizes all historical feedback into trends, ranked features, bugs, and sentiment.
 - **Social Sentiment Scanner** searches Reddit, Stack Overflow, and X for public customer sentiment about any product.
+- **Resolution Status Tracker** cross-references customer feedback with your issue tracker to report what's been fixed, what's on the roadmap, and what's still open.
 - All skills generate **markdown reports** and **visual HTML dashboards**.
 - Works with **GitHub Copilot, Claude, ChatGPT, or any LLM agent**.
 
@@ -19,6 +20,7 @@ Customer Feedback Analyzer provides two AI skills that turn raw customer feedbac
 - 📅 Weekly feedback summaries with takeaways, feature requests, bugs, quotes
 - 📊 Cumulative trend analysis across all feedback history
 - 🌐 Social sentiment scanning across Reddit, Stack Overflow, and X
+- ✅ Resolution tracking — what's fixed, roadmapped, backlogged, or missing
 - 📈 Interactive HTML dashboards with charts and visualizations
 - 🔌 Portable — works with any LLM and any transcript source
 - 🛡️ Privacy-first — runs locally, no data sent to third parties
@@ -78,6 +80,13 @@ customer-feedback-analyzer/
 2. Searches Reddit, Stack Overflow, and X for recent mentions
 3. Classifies each post by sentiment, category, and engagement
 4. Generates a report with themes, feature requests, bugs, quotes, and action items
+
+### 4. Resolution Status Tracker
+
+1. Cross-references customer feedback with your issue tracker (ADO, GitHub Issues, Jira)
+2. Classifies each item as resolved, on roadmap, backlogged, open, or untracked
+3. Calculates resolution rate and roadmap coverage metrics
+4. Flags customer-reported items with no matching work item
 
 ## HTML Dashboards
 
