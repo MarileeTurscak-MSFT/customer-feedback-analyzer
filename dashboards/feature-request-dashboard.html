@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feature Request Report — AI Cost Analyzer</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --yellow: #d29922; --red: #f85149;
+    --purple: #bc8cff; --orange: #f0883e; --pink: #f778ba;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+         background: var(--bg); color: var(--text); padding: 24px; line-height: 1.5; }
+  .header { text-align: center; margin-bottom: 32px; }
+  .header h1 { font-size: 28px; margin-bottom: 4px; }
+  .header .sub { color: var(--muted); font-size: 14px; }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 32px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+         padding: 20px; text-align: center; }
+  .kpi .value { font-size: 36px; font-weight: 700; }
+  .kpi .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+  .kpi .sub-val { font-size: 13px; margin-top: 6px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+  .grid-full { margin-bottom: 32px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .card h2 { font-size: 16px; margin-bottom: 16px; color: var(--accent); }
+
+  /* Horizontal stacked bar */
+  .stacked-bar { display: flex; height: 36px; border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
+  .stacked-bar div { display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #fff; }
+  .stacked-legend { display: flex; gap: 16px; flex-wrap: wrap; }
+  .stacked-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .stacked-swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* Demand bars */
+  .demand-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .demand-row:last-child { border-bottom: none; }
+  .demand-rank { width: 28px; font-size: 14px; font-weight: 700; color: var(--muted); text-align: center; }
+  .demand-info { flex: 1; min-width: 0; }
+  .demand-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .demand-meta { font-size: 11px; color: var(--muted); }
+  .demand-bar-track { width: 120px; height: 20px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+  .demand-bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+                     font-size: 11px; font-weight: 700; color: #fff; }
+  .demand-status { width: 90px; text-align: center; }
+
+  .badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; }
+  .badge-shipped { background: rgba(63,185,80,0.15); color: var(--green); }
+  .badge-roadmap { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .badge-backlog { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .badge-untracked { background: rgba(248,81,73,0.15); color: var(--red); }
+  .badge-new { background: rgba(188,140,255,0.15); color: var(--purple); }
+
+  .priority-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+
+  /* Theme cards */
+  .theme-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .theme-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
+  .theme-card .theme-name { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+  .theme-card .theme-count { font-size: 24px; font-weight: 700; color: var(--accent); }
+  .theme-card .theme-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Shipped list */
+  .shipped-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .shipped-item:last-child { border-bottom: none; }
+  .shipped-check { font-size: 18px; }
+  .shipped-info { flex: 1; }
+  .shipped-title { font-size: 13px; font-weight: 600; }
+  .shipped-detail { font-size: 11px; color: var(--muted); }
+  .shipped-impact { font-size: 12px; color: var(--green); font-style: italic; }
+
+  /* Roadmap timeline */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+  .tl-item { position: relative; padding-bottom: 20px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-dot { position: absolute; left: -20px; top: 4px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--bg); }
+  .tl-dot.active { background: var(--accent); }
+  .tl-dot.planned { background: var(--yellow); }
+  .tl-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .tl-title { font-size: 13px; font-weight: 600; }
+  .tl-meta { font-size: 12px; color: var(--muted); }
+
+  /* Untracked alert */
+  .alert-box { background: rgba(248,81,73,0.08); border: 1px solid rgba(248,81,73,0.3); border-radius: 10px;
+               padding: 16px 20px; display: flex; align-items: flex-start; gap: 12px; }
+  .alert-icon { font-size: 20px; }
+  .alert-content { flex: 1; }
+  .alert-title { font-size: 14px; font-weight: 600; color: var(--red); margin-bottom: 8px; }
+  .alert-item { font-size: 13px; padding: 4px 0; display: flex; justify-content: space-between; }
+  .alert-item span:last-child { color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--border); color: var(--muted);
+       font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: rgba(88,166,255,0.04); }
+
+  .action-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .action-row:last-child { border-bottom: none; }
+  .action-badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .action-high { background: rgba(248,81,73,0.15); color: var(--red); }
+  .action-med { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .action-low { background: rgba(63,185,80,0.15); color: var(--green); }
+  .action-text { font-size: 13px; }
+  .action-who { color: var(--muted); font-size: 12px; }
+
+  .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 32px; padding-top: 16px;
+            border-top: 1px solid var(--border); }
+
+  /* Quote card */
+  .quote-card { background: var(--bg); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0;
+                padding: 12px 16px; margin-bottom: 10px; }
+  .quote-text { font-size: 13px; font-style: italic; }
+  .quote-attr { font-size: 11px; color: var(--muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>💡 Feature Request Report</h1>
+  <div class="sub">AI Cost Analyzer &nbsp;·&nbsp; All Time (new requests highlighted from last 30 days) &nbsp;·&nbsp; 18 unique requests</div>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="value">18</div>
+    <div class="label">Total Requests</div>
+    <div class="sub-val" style="color:var(--purple)">3 new this period</div>
+  </div>
+  <div class="kpi">
+    <div class="value" style="color:var(--green)">4</div>
+    <div class="label">Shipped</div>
+    <div class="sub-val" style="color:var(--green)">22% fulfillment</div>
+  </div>
+  <div class="kpi">
+    <div class="value" style="color:var(--accent)">5</div>
+    <div class="label">On Roadmap</div>
+    <div class="sub-val" style="color:var(--accent)">28% committed</div>
+  </div>
+  <div class="kpi">
+    <div class="value" style="color:var(--yellow)">4</div>
+    <div class="label">Backlogged</div>
+    <div class="sub-val" style="color:var(--yellow)">22% waiting</div>
+  </div>
+  <div class="kpi">
+    <div class="value" style="color:var(--red)">3</div>
+    <div class="label">Not in Tracker</div>
+    <div class="sub-val" style="color:var(--red)">⚠️ Action needed</div>
+  </div>
+</div>
+
+<!-- Status distribution bar -->
+<div class="grid-full">
+  <div class="card">
+    <h2>Request Status Distribution</h2>
+    <div class="stacked-bar">
+      <div style="width:22.2%;background:var(--green)">4 Shipped</div>
+      <div style="width:27.8%;background:var(--accent)">5 Roadmap</div>
+      <div style="width:22.2%;background:var(--yellow)">4 Backlog</div>
+      <div style="width:16.7%;background:var(--red)">3 Untracked</div>
+      <div style="width:11.1%;background:var(--purple)">2 Other</div>
+    </div>
+    <div class="stacked-legend">
+      <div class="stacked-legend-item"><div class="stacked-swatch" style="background:var(--green)"></div>Shipped</div>
+      <div class="stacked-legend-item"><div class="stacked-swatch" style="background:var(--accent)"></div>On Roadmap</div>
+      <div class="stacked-legend-item"><div class="stacked-swatch" style="background:var(--yellow)"></div>Backlogged</div>
+      <div class="stacked-legend-item"><div class="stacked-swatch" style="background:var(--red)"></div>Not in Tracker</div>
+      <div class="stacked-legend-item"><div class="stacked-swatch" style="background:var(--purple)"></div>Other</div>
+    </div>
+  </div>
+</div>
+
+<!-- Top Requests by Demand + Themes -->
+<div class="grid-2">
+  <div class="card">
+    <h2>Top Requests by Customer Demand</h2>
+    <div id="demandList"></div>
+  </div>
+  <div class="card">
+    <h2>Request Themes</h2>
+    <div class="theme-grid" id="themeGrid"></div>
+    <div style="margin-top:20px">
+      <h2 style="font-size:14px;margin-bottom:10px;color:var(--accent)">Top Customer Quotes</h2>
+      <div class="quote-card">
+        <div class="quote-text">"I need cost alerts in Slack, not another dashboard to check."</div>
+        <div class="quote-attr">— Contoso Financial, Mar 10</div>
+      </div>
+      <div class="quote-card">
+        <div class="quote-text">"Azure scanning is great but our AWS accounts feel like second-class citizens."</div>
+        <div class="quote-attr">— Northwind Traders, Mar 15</div>
+      </div>
+      <div class="quote-card">
+        <div class="quote-text">"My CFO won't log into a dashboard. Give me a weekly PDF I can forward."</div>
+        <div class="quote-attr">— Contoso Financial, Apr 2</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Shipped + Roadmap -->
+<div class="grid-2">
+  <div class="card">
+    <h2>✅ Recently Shipped</h2>
+    <div id="shippedList"></div>
+  </div>
+  <div class="card">
+    <h2>🗺️ Roadmap Timeline</h2>
+    <div class="timeline" id="timeline"></div>
+  </div>
+</div>
+
+<!-- Untracked Alert -->
+<div class="grid-full">
+  <div class="alert-box">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-content">
+      <div class="alert-title">3 Customer Requests Not in Any Tracker</div>
+      <div class="alert-item"><span>Export to Power BI format</span><span>Contoso Financial · 🟡 Medium</span></div>
+      <div class="alert-item"><span>Compare costs across Azure subscriptions</span><span>Contoso Financial · 🟡 Medium</span></div>
+      <div class="alert-item"><span>Mobile-friendly dashboard view</span><span>Tailspin Toys · 🟢 Low</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Demand Trends + Actions -->
+<div class="grid-2">
+  <div class="card">
+    <h2>📈 Demand Trends</h2>
+    <table>
+      <thead><tr><th>Metric</th><th>This Period</th><th>Last Period</th><th>Trend</th></tr></thead>
+      <tbody>
+        <tr><td>New requests</td><td>3</td><td>5</td><td style="color:var(--accent)">↓ Stabilizing</td></tr>
+        <tr><td>Requests shipped</td><td>4</td><td>2</td><td style="color:var(--green)">↑ Improving</td></tr>
+        <tr><td>Avg requests/customer</td><td>2.8</td><td>2.3</td><td style="color:var(--yellow)">↑ Growing</td></tr>
+        <tr><td>Most-requested feature</td><td colspan="2">Slack/Teams alerts (5 customers)</td><td style="color:var(--purple)">Changed</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h2>🎯 Recommended Actions</h2>
+    <div class="action-row">
+      <span class="action-badge action-high">High</span>
+      <div><div class="action-text">Ship Slack/Teams alerts in v2.4</div><div class="action-who">5 customers waiting — top demand signal</div></div>
+    </div>
+    <div class="action-row">
+      <span class="action-badge action-high">High</span>
+      <div><div class="action-text">Confirm AWS multi-account timeline</div><div class="action-who">4 customers blocked — churn risk</div></div>
+    </div>
+    <div class="action-row">
+      <span class="action-badge action-med">Medium</span>
+      <div><div class="action-text">Create tracker items for 3 untracked requests</div><div class="action-who">Power BI, cross-sub, mobile view</div></div>
+    </div>
+    <div class="action-row">
+      <span class="action-badge action-med">Medium</span>
+      <div><div class="action-text">Close the loop on shipped features</div><div class="action-who">Notify requesting customers about sparklines, Keep tags, notifications, API</div></div>
+    </div>
+    <div class="action-row">
+      <span class="action-badge action-low">Low</span>
+      <div><div class="action-text">Evaluate custom tagging feasibility</div><div class="action-who">3 customers — needs design review</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Sample report with fictional data for demonstration purposes &nbsp;·&nbsp; Customer Feedback Analyzer &nbsp;·&nbsp; github.com/MarileeTurscak-MSFT/customer-feedback-analyzer
+</div>
+
+<script>
+// Top requests by demand
+const requests = [
+  { rank: 1, title: 'Slack/Teams alert integration', priority: 'critical', customers: 5, status: 'roadmap', item: 'AB#4860' },
+  { rank: 2, title: 'AWS multi-account scanning parity', priority: 'critical', customers: 4, status: 'roadmap', item: 'AB#4712' },
+  { rank: 3, title: 'Scheduled PDF reports for executives', priority: 'high', customers: 4, status: 'roadmap', item: 'AB#4875' },
+  { rank: 4, title: 'Terraform/IaC state comparison', priority: 'high', customers: 3, status: 'roadmap', item: 'AB#4890' },
+  { rank: 5, title: 'Custom tagging schema support', priority: 'high', customers: 3, status: 'backlog', item: 'AB#4805' },
+  { rank: 6, title: 'Cost trend sparklines on dashboard', priority: 'high', customers: 3, status: 'shipped', item: 'AB#4689' },
+  { rank: 7, title: '"Keep" tagging to exclude resources', priority: 'medium', customers: 2, status: 'shipped', item: 'AB#4790' },
+  { rank: 8, title: 'Scan completion notifications', priority: 'medium', customers: 2, status: 'shipped', item: 'AB#4701' },
+  { rank: 9, title: 'REST API for automation', priority: 'medium', customers: 2, status: 'shipped', item: 'AB#4700' },
+  { rank: 10, title: 'Export to Power BI format', priority: 'medium', customers: 1, status: 'untracked', item: '—' },
+];
+const priorityColors = { critical: 'var(--red)', high: 'var(--orange)', medium: 'var(--yellow)', low: 'var(--green)' };
+const statusBadge = { shipped: 'badge-shipped', roadmap: 'badge-roadmap', backlog: 'badge-backlog', untracked: 'badge-untracked' };
+const statusLabel = { shipped: '✅ Shipped', roadmap: '🗺️ Roadmap', backlog: '📋 Backlog', untracked: '⚠️ Untracked' };
+const dl = document.getElementById('demandList');
+const maxC = 5;
+requests.forEach(r => {
+  const d = document.createElement('div'); d.className = 'demand-row';
+  const pct = (r.customers / maxC) * 100;
+  d.innerHTML =
+    '<div class="demand-rank">' + r.rank + '</div>' +
+    '<div class="demand-info"><div class="demand-title"><span class="priority-dot" style="background:' + priorityColors[r.priority] + '"></span>' + r.title + '</div>' +
+    '<div class="demand-meta">' + r.item + '</div></div>' +
+    '<div class="demand-bar-track"><div class="demand-bar-fill" style="width:' + pct + '%;background:' + priorityColors[r.priority] + '">' + r.customers + '</div></div>' +
+    '<div class="demand-status"><span class="badge ' + statusBadge[r.status] + '">' + statusLabel[r.status] + '</span></div>';
+  dl.appendChild(d);
+});
+
+// Themes
+const themes = [
+  { name: 'Alerting & Notifications', requests: 3, customers: 6, color: 'var(--red)' },
+  { name: 'Multi-cloud Parity', requests: 3, customers: 5, color: 'var(--accent)' },
+  { name: 'Reporting & Export', requests: 4, customers: 5, color: 'var(--yellow)' },
+  { name: 'Customization', requests: 3, customers: 4, color: 'var(--purple)' },
+  { name: 'IaC & Automation', requests: 3, customers: 4, color: 'var(--green)' },
+];
+const tg = document.getElementById('themeGrid');
+themes.forEach(t => {
+  const c = document.createElement('div'); c.className = 'theme-card';
+  c.innerHTML = '<div class="theme-name">' + t.name + '</div>' +
+    '<div class="theme-count" style="color:' + t.color + '">' + t.customers + '</div>' +
+    '<div class="theme-sub">customers · ' + t.requests + ' requests</div>';
+  tg.appendChild(c);
+});
+
+// Shipped features
+const shipped = [
+  { title: 'Cost trend sparklines', by: 'Northwind, Contoso, Fabrikam', date: 'May 12', impact: 'Used in weekly FinOps reviews' },
+  { title: '"Keep" tagging (exclude resources)', by: 'Fabrikam, Tailspin', date: 'May 18', impact: 'Eliminated #1 false-positive complaint' },
+  { title: 'Scan completion notifications', by: 'Contoso, Alpine', date: 'May 3', impact: 'Saves ~30 min/day of polling' },
+  { title: 'REST API for automation', by: 'Contoso, Woodgrove', date: 'Apr 30', impact: 'Woodgrove built nightly scans in CI/CD within a week' },
+];
+const sl = document.getElementById('shippedList');
+shipped.forEach(s => {
+  const d = document.createElement('div'); d.className = 'shipped-item';
+  d.innerHTML = '<div class="shipped-check">✅</div>' +
+    '<div class="shipped-info"><div class="shipped-title">' + s.title + '</div>' +
+    '<div class="shipped-detail">' + s.by + ' · Shipped ' + s.date + '</div></div>' +
+    '<div class="shipped-impact">' + s.impact + '</div>';
+  sl.appendChild(d);
+});
+
+// Roadmap timeline
+const roadmap = [
+  { release: 'v2.4 — June 2026', items: [
+    { title: 'Slack/Teams alerts', status: 'active', customers: 5, priority: 'Critical' },
+    { title: 'Scheduled PDF reports', status: 'planned', customers: 4, priority: 'High' },
+  ]},
+  { release: 'v2.5 — July 2026', items: [
+    { title: 'AWS multi-account parity', status: 'active', customers: 4, priority: 'Critical' },
+    { title: 'GCP scanning improvements', status: 'planned', customers: 2, priority: 'Medium' },
+  ]},
+  { release: 'v2.6 — August 2026', items: [
+    { title: 'Terraform/IaC comparison', status: 'planned', customers: 3, priority: 'High' },
+  ]},
+];
+const tl = document.getElementById('timeline');
+roadmap.forEach(r => {
+  const label = document.createElement('div'); label.className = 'tl-item';
+  let html = '<div class="tl-dot active"></div><div class="tl-label">' + r.release + '</div>';
+  r.items.forEach(i => {
+    const dotClass = i.status === 'active' ? 'color:var(--accent)' : 'color:var(--yellow)';
+    html += '<div class="tl-title" style="margin-top:6px">' + i.title + ' <span class="badge ' + (i.status === 'active' ? 'badge-roadmap' : 'badge-backlog') + '">' + (i.status === 'active' ? 'In Progress' : 'Planned') + '</span></div>';
+    html += '<div class="tl-meta">' + i.customers + ' customers · ' + i.priority + ' priority</div>';
+  });
+  label.innerHTML = html;
+  tl.appendChild(label);
+});
+</script>
+</body>
+</html>
