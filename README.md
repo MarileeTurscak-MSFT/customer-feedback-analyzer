@@ -10,13 +10,15 @@ Customer Feedback Analyzer provides two AI skills that turn raw customer feedbac
 
 - **Weekly Feedback Analyzer** processes meeting transcripts and notes from the past week.
 - **Cumulative Feedback Report** synthesizes all historical feedback into trends, ranked features, bugs, and sentiment.
-- Both skills generate **markdown reports** and **visual HTML dashboards**.
+- **Social Sentiment Scanner** searches Reddit, Stack Overflow, and X for public customer sentiment about any product.
+- All skills generate **markdown reports** and **visual HTML dashboards**.
 - Works with **GitHub Copilot, Claude, ChatGPT, or any LLM agent**.
 
 ## Features
 
 - 📅 Weekly feedback summaries with takeaways, feature requests, bugs, quotes
 - 📊 Cumulative trend analysis across all feedback history
+- 🌐 Social sentiment scanning across Reddit, Stack Overflow, and X
 - 📈 Interactive HTML dashboards with charts and visualizations
 - 🔌 Portable — works with any LLM and any transcript source
 - 🛡️ Privacy-first — runs locally, no data sent to third parties
@@ -69,6 +71,13 @@ customer-feedback-analyzer/
 2. Deduplicates repeated requests, bugs, and themes
 3. Ranks findings by frequency and impact
 4. Generates a comprehensive markdown report and dashboard
+
+### 3. Social Sentiment Scanner
+
+1. Takes a product name and optional aliases as input
+2. Searches Reddit, Stack Overflow, and X for recent mentions
+3. Classifies each post by sentiment, category, and engagement
+4. Generates a report with themes, feature requests, bugs, quotes, and action items
 
 ## HTML Dashboards
 
