@@ -14,6 +14,8 @@ Customer Feedback Analyzer provides AI skills that turn raw customer feedback in
 - **Resolution Status Tracker** cross-references customer feedback with your issue tracker to report what's been fixed, what's on the roadmap, and what's still open.
 - **Asset Gap Tracker** identifies missing docs, videos, labs, and marketing materials causing customer friction, and tracks their creation status.
 - **Customer Usage Tracker** tracks product adoption metrics: total customers, advanced deployers, MAU, WAU, and at-risk accounts.
+- **Bug Tracker** tracks all customer-reported bugs with severity, resolution status, patterns, and velocity metrics.
+- **Feature Request Tracker** ranks customer feature requests by demand, tracks roadmap status, and identifies untracked asks.
 - All skills generate **markdown reports** and **visual HTML dashboards**.
 - Works with **GitHub Copilot, Claude, ChatGPT, or any LLM agent**.
 
@@ -25,6 +27,8 @@ Customer Feedback Analyzer provides AI skills that turn raw customer feedback in
 - ✅ Resolution tracking — what's fixed, roadmapped, backlogged, or missing
 - 📂 Asset gap tracking — missing docs, videos, labs, and marketing materials
 - 👥 Customer usage tracking — adoption depth, MAU/WAU, at-risk accounts
+- 🐛 Bug tracking — severity, resolution velocity, pattern detection
+- 💡 Feature request tracking — demand ranking, roadmap status, gap detection
 - 📈 Interactive HTML dashboards with charts and visualizations
 - 🔌 Portable — works with any LLM and any transcript source
 - 🛡️ Privacy-first — runs locally, no data sent to third parties
@@ -105,6 +109,20 @@ customer-feedback-analyzer/
 2. Calculates deployment depth per customer (number of features used)
 3. Classifies customers as advanced deployers, MAU, WAU, at-risk, or churned
 4. Flags at-risk customers with specific engagement signals
+
+### 7. Bug Tracker
+
+1. Scans feedback for all customer-reported bugs
+2. Classifies by severity (critical/high/medium/low) based on customer impact
+3. Cross-references with issue tracker for resolution status
+4. Identifies bug patterns, resolution velocity, and untracked bugs
+
+### 8. Feature Request Tracker
+
+1. Extracts all feature requests from feedback sources
+2. Deduplicates and ranks by customer demand count
+3. Cross-references with issue tracker and roadmap
+4. Flags requests with no matching work item
 
 ## HTML Dashboards
 
