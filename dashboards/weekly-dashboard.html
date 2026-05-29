@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weekly Customer Feedback Report</title>
+  <style>
+    :root {
+      --primary: #1B3A5C;
+      --secondary: #2B7ABB;
+      --green: #2EAD6D;
+      --red: #D9534F;
+      --amber: #F0A530;
+      --bg: #F5F7FA;
+      --card: #FFFFFF;
+      --text: #333333;
+      --muted: #667085;
+      --border: #E5EAF1;
+      --shadow: 0 12px 30px rgba(27, 58, 92, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(180deg, #EEF3F8 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #16324F 0%, var(--primary) 55%, #244B74 100%);
+      color: #FFFFFF;
+      border-radius: 24px;
+      padding: 28px 32px;
+      box-shadow: 0 18px 45px rgba(27, 58, 92, 0.24);
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.9rem, 2.4vw, 2.8rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .header p {
+      margin: 4px 0;
+      color: rgba(255, 255, 255, 0.88);
+      font-size: 1rem;
+    }
+
+    .section-grid,
+    .stats-grid,
+    .quotes-grid,
+    .actions-grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      margin-bottom: 24px;
+    }
+
+    .section-grid.two-column {
+      grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr);
+      margin-bottom: 24px;
+      align-items: stretch;
+    }
+
+    .quotes-grid {
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      margin-bottom: 24px;
+    }
+
+    .actions-grid {
+      grid-template-columns: minmax(0, 1fr);
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 22px;
+    }
+
+    .card h2,
+    .card h3 {
+      margin: 0 0 16px;
+      font-size: 1.15rem;
+      color: var(--primary);
+      letter-spacing: -0.02em;
+    }
+
+    .stat-card {
+      padding: 20px 20px 20px 18px;
+      border-left: 6px solid var(--secondary);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 14px;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      line-height: 1;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.04em;
+    }
+
+    .takeaways-list,
+    .actions-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 14px;
+    }
+
+    .takeaway-item,
+    .action-item {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 7px;
+      background: var(--secondary);
+      box-shadow: 0 0 0 6px rgba(43, 122, 187, 0.12);
+      flex-shrink: 0;
+    }
+
+    .takeaway-text,
+    .action-text {
+      line-height: 1.55;
+      color: var(--text);
+    }
+
+    .chart-shell {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+      font-size: 0.96rem;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.88rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      line-height: 1;
+    }
+
+    .quote-card {
+      background: #F1F4F8;
+      border: 1px solid #E3E9F0;
+    }
+
+    .quote-text {
+      font-style: italic;
+      line-height: 1.65;
+      margin: 0 0 16px;
+      color: #3F4A5A;
+      font-size: 1rem;
+    }
+
+    .quote-attribution {
+      color: var(--secondary);
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .checkbox {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      border: 2px solid #B8C4D3;
+      background: #FFFFFF;
+      margin-top: 2px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+    }
+
+    .due-date {
+      display: inline-block;
+      margin-left: 6px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .footer {
+      background: #EDF2F6;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 18px;
+      padding: 16px 20px;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 980px) {
+      .section-grid.two-column {
+        grid-template-columns: 1fr;
+      }
+
+      .page {
+        padding: 16px;
+      }
+
+      .header,
+      .card {
+        padding: 20px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .header h1 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="header" id="header"></header>
+
+    <section class="stats-grid" id="stats"></section>
+
+    <section class="section-grid two-column">
+      <div class="card">
+        <h2 id="takeaways-title"></h2>
+        <ul class="takeaways-list" id="takeaways"></ul>
+      </div>
+      <div class="card">
+        <h2 id="chart-title"></h2>
+        <div class="chart-shell">
+          <div class="chart-legend" id="chart-legend"></div>
+          <svg id="feature-chart" role="img" aria-labelledby="chart-title" width="100%"></svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-bottom: 24px;">
+      <h2 id="bugs-title"></h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Issue</th>
+              <th>Severity</th>
+              <th>Customer</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="bugs-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="quotes-grid" id="quotes"></section>
+
+    <section class="card actions-grid">
+      <h2 id="actions-title"></h2>
+      <ul class="actions-list" id="actions"></ul>
+    </section>
+
+    <footer class="footer" id="footer"></footer>
+  </main>
+
+  <script>
+    // REPLACE THIS DATA BLOCK WITH YOUR OWN DATA
+    const dashboardData = {
+      header: {
+        title: "Weekly Customer Feedback Report",
+        subtitle1: "AI Cost Analyzer — Week of May 19–25, 2026",
+        subtitle2: "5 Customer Sessions | Generated May 26, 2026"
+      },
+      stats: [
+        { label: "Customers This Week", value: "5", color: "#2B7ABB" },
+        { label: "Feature Requests", value: "7", color: "#2EAD6D" },
+        { label: "High Priority", value: "3", color: "#D9534F" },
+        { label: "Bugs Reported", value: "3", color: "#F0A530" },
+        { label: "Sentiment", value: "Positive", color: "#2EAD6D" }
+      ],
+      takeaways: [
+        "Stale resource detection is the #1 value driver — 4/5 customers cited it",
+        "Contoso Financial: $42K/month saved within 3 weeks",
+        "Department-level cost attribution demanded by finance teams",
+        "Trust in deletion recommendations still low — approval workflows needed",
+        "Multi-cloud support emerging as critical gap"
+      ],
+      featureRequests: [
+        { name: "Dept/cost-center attribution", priority: "High", color: "#D9534F", value: 96 },
+        { name: "Human approval workflow", priority: "High", color: "#D9534F", value: 90 },
+        { name: "Multi-cloud savings view", priority: "High", color: "#D9534F", value: 86 },
+        { name: "Configurable alert thresholds", priority: "Medium", color: "#F0A530", value: 68 },
+        { name: "Leadership email reports", priority: "Medium", color: "#F0A530", value: 62 },
+        { name: "Historical savings trends", priority: "Medium", color: "#F0A530", value: 58 },
+        { name: "Tag-based app grouping", priority: "Low", color: "#2EAD6D", value: 42 }
+      ],
+      bugs: [
+        { issue: "Savings double-counts shared disks", severity: "High", customer: "Contoso Financial", status: "In Progress" },
+        { issue: "\"Safe to delete\" on active resources", severity: "High", customer: "Tailspin Toys", status: "In Review" },
+        { issue: "Email report breaks in Outlook", severity: "Medium", customer: "Woodgrove Bank", status: "Open" }
+      ],
+      quotes: [
+        {
+          quote: "We burned $1.2M last year on resources nobody was using...",
+          attribution: "Jordan Matthews, VP Cloud Infrastructure, Contoso Financial"
+        },
+        {
+          quote: "I love the recommendations, but I can't click 'delete' on a production resource without my CAB seeing it first.",
+          attribution: "Chris Ramirez, Sr. Cloud Engineer, Fabrikam Healthcare"
+        },
+        {
+          quote: "The stale app detection alone justified the cost. We found 340 app registrations unused for over a year.",
+          attribution: "Jamie Lawson, Identity Team Lead, Woodgrove Bank"
+        }
+      ],
+      actions: [
+        { text: "Share department-attribution mockups with Contoso and Northwind", due: "Due: May 30" },
+        { text: "Schedule deep-dive on approval workflows with Fabrikam Healthcare", due: "Due: Jun 2" },
+        { text: "File configurable alert thresholds feature request with Tailspin examples", due: "Due: Jun 3" },
+        { text: "Send multi-cloud roadmap preview to Contoso Financial", due: "Due: Jun 4" },
+        { text: "Create leadership PDF export prototype for Woodgrove Bank", due: "Due: Jun 6" },
+        { text: "Investigate safe-to-delete logic for active network connections", due: "Due: May 29" }
+      ],
+      footer: "Generated by Customer Feedback Analyzer • All data is fictional"
+    };
+
+    (function renderDashboard(data) {
+      const svgNs = "http://www.w3.org/2000/svg";
+
+      function byId(id) {
+        return document.getElementById(id);
+      }
+
+      function appendTextElement(parent, tagName, text, className) {
+        const element = document.createElement(tagName);
+        if (className) {
+          element.className = className;
+        }
+        element.textContent = text;
+        parent.appendChild(element);
+        return element;
+      }
+
+      function severityColors(level) {
+        if (level === "High") {
+          return { bg: "rgba(217, 83, 79, 0.14)", fg: "#B53F3C" };
+        }
+        if (level === "Medium") {
+          return { bg: "rgba(240, 165, 48, 0.18)", fg: "#A66A00" };
+        }
+        return { bg: "rgba(46, 173, 109, 0.14)", fg: "#1E8452" };
+      }
+
+      const header = byId("header");
+      appendTextElement(header, "h1", data.header.title);
+      appendTextElement(header, "p", data.header.subtitle1);
+      appendTextElement(header, "p", data.header.subtitle2);
+
+      const stats = byId("stats");
+      data.stats.forEach((stat) => {
+        const card = document.createElement("article");
+        card.className = "card stat-card";
+        card.style.borderLeftColor = stat.color;
+
+        appendTextElement(card, "div", stat.label, "stat-label");
+        appendTextElement(card, "div", stat.value, "stat-value");
+        stats.appendChild(card);
+      });
+
+      byId("takeaways-title").textContent = "Key Takeaways";
+      const takeaways = byId("takeaways");
+      data.takeaways.forEach((item) => {
+        const li = document.createElement("li");
+        li.className = "takeaway-item";
+
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        li.appendChild(dot);
+
+        appendTextElement(li, "div", item, "takeaway-text");
+        takeaways.appendChild(li);
+      });
+
+      byId("chart-title").textContent = "Feature Requests by Priority";
+      const legend = byId("chart-legend");
+      [
+        { label: "High", color: "#D9534F" },
+        { label: "Medium", color: "#F0A530" },
+        { label: "Low", color: "#2EAD6D" }
+      ].forEach((item) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "legend-item";
+
+        const swatch = document.createElement("span");
+        swatch.className = "legend-swatch";
+        swatch.style.backgroundColor = item.color;
+        wrapper.appendChild(swatch);
+
+        appendTextElement(wrapper, "span", item.label);
+        legend.appendChild(wrapper);
+      });
+
+      const chart = byId("feature-chart");
+      const rowHeight = 42;
+      const width = 560;
+      const height = data.featureRequests.length * rowHeight + 24;
+      const labelWidth = 200;
+      const barMax = 300;
+
+      chart.setAttribute("viewBox", "0 0 " + width + " " + height);
+      chart.setAttribute("height", String(height));
+      chart.setAttribute("aria-label", "Horizontal bar chart showing feature requests by priority.");
+
+      data.featureRequests.forEach((feature, index) => {
+        const y = index * rowHeight + 12;
+        const label = document.createElementNS(svgNs, "text");
+        label.setAttribute("x", "0");
+        label.setAttribute("y", String(y + 14));
+        label.setAttribute("fill", "#334155");
+        label.setAttribute("font-size", "12");
+        label.setAttribute("font-family", "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif");
+        label.textContent = feature.name;
+        chart.appendChild(label);
+
+        const track = document.createElementNS(svgNs, "rect");
+        track.setAttribute("x", String(labelWidth));
+        track.setAttribute("y", String(y));
+        track.setAttribute("width", String(barMax));
+        track.setAttribute("height", "18");
+        track.setAttribute("rx", "9");
+        track.setAttribute("fill", "#E8EEF5");
+        chart.appendChild(track);
+
+        const bar = document.createElementNS(svgNs, "rect");
+        bar.setAttribute("x", String(labelWidth));
+        bar.setAttribute("y", String(y));
+        bar.setAttribute("width", String(Math.max(18, Math.round((feature.value / 100) * barMax))));
+        bar.setAttribute("height", "18");
+        bar.setAttribute("rx", "9");
+        bar.setAttribute("fill", feature.color);
+        chart.appendChild(bar);
+
+        const value = document.createElementNS(svgNs, "text");
+        value.setAttribute("x", String(labelWidth + barMax + 14));
+        value.setAttribute("y", String(y + 14));
+        value.setAttribute("fill", "#526173");
+        value.setAttribute("font-size", "12");
+        value.setAttribute("font-family", "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif");
+        value.textContent = feature.priority;
+        chart.appendChild(value);
+      });
+
+      byId("bugs-title").textContent = "Bugs & Issues";
+      const bugsBody = byId("bugs-body");
+      data.bugs.forEach((bug) => {
+        const tr = document.createElement("tr");
+
+        [bug.issue, bug.severity, bug.customer, bug.status].forEach((value, index) => {
+          const td = document.createElement("td");
+          if (index === 1) {
+            const badge = document.createElement("span");
+            badge.className = "badge";
+            const colors = severityColors(value);
+            badge.style.backgroundColor = colors.bg;
+            badge.style.color = colors.fg;
+            badge.textContent = value;
+            td.appendChild(badge);
+          } else {
+            td.textContent = value;
+          }
+          tr.appendChild(td);
+        });
+
+        bugsBody.appendChild(tr);
+      });
+
+      const quotes = byId("quotes");
+      data.quotes.forEach((quoteData) => {
+        const card = document.createElement("article");
+        card.className = "card quote-card";
+
+        const quoteText = document.createElement("p");
+        quoteText.className = "quote-text";
+        quoteText.textContent = '“' + quoteData.quote + '”';
+        card.appendChild(quoteText);
+
+        appendTextElement(card, "div", "— " + quoteData.attribution, "quote-attribution");
+        quotes.appendChild(card);
+      });
+
+      byId("actions-title").textContent = "Follow-up Actions";
+      const actions = byId("actions");
+      data.actions.forEach((action) => {
+        const li = document.createElement("li");
+        li.className = "action-item";
+
+        const checkbox = document.createElement("span");
+        checkbox.className = "checkbox";
+        checkbox.setAttribute("aria-hidden", "true");
+        li.appendChild(checkbox);
+
+        const textWrap = document.createElement("div");
+        textWrap.className = "action-text";
+        const mainText = document.createElement("span");
+        mainText.textContent = action.text;
+        textWrap.appendChild(mainText);
+
+        const due = document.createElement("span");
+        due.className = "due-date";
+        due.textContent = "(" + action.due + ")";
+        textWrap.appendChild(due);
+
+        li.appendChild(textWrap);
+        actions.appendChild(li);
+      });
+
+      byId("footer").textContent = data.footer;
+    })(dashboardData);
+  </script>
+</body>
+</html>
